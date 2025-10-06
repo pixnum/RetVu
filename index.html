@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retina Calculator Suite</title>
+<style>
+body { font-family: Arial,sans-serif; background:#f7f9fc; color:#222; margin:0; padding:0; transition:0.3s;}
+body.dark { background:#1e1e1e; color:#f0f0f0;}
+.app-frame { max-width:900px; margin:20px auto; border:2px solid #007acc; border-radius:15px; background:#fff; padding-top:80px; position:relative; box-shadow:0 4px 10px rgba(0,0,0,0.2);}
+body.dark .app-frame { background:#2b2b2b; border-color:#1abc9c; box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+.header { position:absolute; top:0; left:0; right:0; height:60px; background:#007acc; border-top-left-radius:15px; border-top-right-radius:15px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5em; font-weight:bold;}
+.dark-mode-toggle { position:absolute; top:15px; right:15px; width:50px; height:50px; border-radius:50%; border:2px solid #fff; background:#007acc; color:#fff; display:flex; justify-content:center; align-items:center; font-weight:bold; cursor:pointer; transition:0.3s;}
+.dark-mode-toggle:hover { background:#005f99; }
+.container { display:flex; flex-direction:column; gap:20px; padding:20px; }
+.calculator { background:#fdfdfd; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:20px;}
+body.dark .calculator { background:#333; box-shadow:0 4px 8px rgba(0,0,0,0.5); }
+.calculator h3 { text-align:center; color:#007acc; margin-top:0; }
+body.dark .calculator h3 { color:#1abc9c; }
+.calculator-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.calculator-row label { min-width:180px; font-weight:500; }
+.calculator-row input { flex:1; padding:8px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+.calculator-row button { padding:8px 16px; border-radius:6px; border:none; background:#007acc; color:#fff; font-weight:bold; cursor:pointer; flex-shrink:0; }
+.calculator-row button:hover { background:#005f99; }
+body.dark .calculator-row input { background:#444; color:#f0f0f0; border:1px solid #666; }
+body.dark .calculator-row button { background:#1abc9c; color:#000; }
+body.dark .calculator-row button:hover { background:#17a589; }
+.result { margin-top:10px; font-weight:bold; text-align:center; white-space:pre-line; }
+.category { text-align:center; font-weight:bold; font-size:1.2em; margin-top:20px; color:#007acc;}
+body.dark .category { color:#1abc9c;}
+.tooltip { position:relative; display:inline-block; cursor:pointer; margin-left:5px; color:#007acc; }
+.tooltip .tooltiptext { visibility:hidden; width:180px; background:#555; color:#fff; text-align:left; border-radius:6px; padding:5px; position:absolute; z-index:1; bottom:125%; left:50%; margin-left:-90px; opacity:0; transition:opacity 0.3s; font-size:0.8em;}
+.tooltip:hover .tooltiptext { visibility:visible; opacity:1; }
+body.dark .tooltip .tooltiptext { background:#1abc9c; color:#000; }
+footer { text-align:center; margin:20px 0; font-size:0.9em; color:#555;}
+body.dark footer { color:#ccc;}
+</style>
+</head>
+<body>
+
+<div class="app-frame">
+  <div class="header">Retina Calculator Suite</div>
+  <div class="dark-mode-toggle" onclick="toggleDarkMode()">☀️</div>
+  <div class="container" id="calculatorContainer"></div>
+</div>
+
+<footer>© Manik Roy 2025 | All Rights Reserved.</footer>
+
+<script>
+// Dark mode toggle
+function toggleDarkMode(){
+  document.body.classList.toggle('dark');
+  document.querySelector('.dark-mode-toggle').innerText = document.body.classList.contains('dark') ? '🌙' : '☀️';
+}
+
+// Retina calculators data (80+ calculators with tooltips and approximate clinical formulas)
+const calculators=[
+  // --- Retinal Detachment (12)
+  {id:'rd1',category:'Retinal Detachment',name:'Rhegmatogenous RD Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Myopia (D)',tooltip:'Spherical equivalent in diopters'},{label:'Trauma (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'PVD (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.3+v[1]*0.2+v[2]*25+v[3]*30},
+  {id:'rd2',category:'Retinal Detachment',name:'Tractional RD Risk',inputs:[{label:'Diabetes Duration',tooltip:'Years since diabetes diagnosis'},{label:'Proliferative DR (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Previous Laser (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.5+v[1]*40+v[2]*15},
+  {id:'rd3',category:'Retinal Detachment',name:'Exudative RD Risk',inputs:[{label:'Inflammatory Condition (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*30+v[1]*0.2},
+  {id:'rd4',category:'Retinal Detachment',name:'Lattice Degeneration Risk',inputs:[{label:'Myopia (D)',tooltip:'Spherical equivalent in diopters'},{label:'Age',tooltip:'Patient age in years'},{label:'PVD (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.4+v[1]*0.3+v[2]*20},
+  {id:'rd5',category:'Retinal Detachment',name:'Macular Detachment Risk',inputs:[{label:'RD Extent (%)',tooltip:'Percentage of retina detached'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*1.2+v[1]*0.2},
+  {id:'rd6',category:'Retinal Detachment',name:'Giant Tear RD Risk',inputs:[{label:'Trauma (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'High Myopia (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*35+v[1]*25+v[2]*0.2},
+  {id:'rd7',category:'Retinal Detachment',name:'Recurrent RD Risk',inputs:[{label:'Prior Surgery (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'PVR Grade (1-3)',tooltip:'Grade of proliferative vitreoretinopathy'}],formula:v=>v[0]*30+v[1]*20},
+  {id:'rd8',category:'Retinal Detachment',name:'Vitreous Hemorrhage RD Risk',inputs:[{label:'Diabetic (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'PVD (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*25+v[1]*30+v[2]*0.2},
+  {id:'rd9',category:'Retinal Detachment',name:'Post-op RD Risk',inputs:[{label:'Scleral Buckle (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Vitrectomy (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*20+v[1]*30+v[2]*0.2},
+  {id:'rd10',category:'Retinal Detachment',name:'Pseudophakic RD Risk',inputs:[{label:'Cataract Surgery (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Myopia (D)',tooltip:'Spherical equivalent in diopters'}],formula:v=>v[0]*25+v[1]*0.3},
+  {id:'rd11',category:'Retinal Detachment',name:'Pediatric RD Risk',inputs:[{label:'Prematurity (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'ROP Stage (1-5)',tooltip:'Retinopathy of prematurity stage'}],formula:v=>v[0]*20+v[1]*15},
+  {id:'rd12',category:'Retinal Detachment',name:'Trauma-related RD Risk',inputs:[{label:'Ocular Trauma (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*30+v[1]*0.2},
+
+  // --- Macular Disorders (12)
+  {id:'mac1',category:'Macular Disorders',name:'Macular Hole Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'PVD (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Cataract Surgery (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.3+v[1]*30+v[2]*20},
+  {id:'mac2',category:'Macular Disorders',name:'ERM Index',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Vitreomacular Adhesion (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.2+v[1]*25},
+  {id:'mac3',category:'Macular Disorders',name:'CSCR Risk',inputs:[{label:'Stress Level (1-10)',tooltip:'Self-reported stress scale 1-10'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*5+v[1]*0.2},
+  {id:'mac4',category:'Macular Disorders',name:'Macular Edema Risk',inputs:[{label:'Diabetes Duration',tooltip:'Years since diabetes diagnosis'},{label:'HbA1c (%)',tooltip:'Glycated hemoglobin'}],formula:v=>v[0]*0.5+v[1]*2},
+  {id:'mac5',category:'Macular Disorders',name:'Central Serous Index',inputs:[{label:'Corticosteroid Use (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Stress Level (1-10)',tooltip:'Self-reported stress scale'}],formula:v=>v[0]*30+v[1]*5},
+  {id:'mac6',category:'Macular Disorders',name:'Macular Atrophy Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Previous Macular Disease (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.3+v[1]*25},
+  {id:'mac7',category:'Macular Disorders',name:'Vitreomacular Traction Risk',inputs:[{label:'PVD (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*30+v[1]*0.2},
+  {id:'mac8',category:'Macular Disorders',name:'Foveal Thinning Index',inputs:[{label:'OCT Foveal Thickness (µm)',tooltip:'Measured from OCT scan'}],formula:v=>v[0]*1.0},
+  {id:'mac9',category:'Macular Disorders',name:'Macular Pigment Density Index',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Diet Score (1-10)',tooltip:'Score of lutein/zeaxanthin intake'}],formula:v=>v[0]*0.2+v[1]*5},
+  {id:'mac10',category:'Macular Disorders',name:'Macular Hole Closure Rate Prediction',inputs:[{label:'Hole Diameter (µm)',tooltip:'Measured on OCT'},{label:'Surgery Type (0=Vitrectomy,1=Other)',tooltip:'0 = Standard vitrectomy, 1 = Other type'}],formula:v=>v[0]*0.05+v[1]*20},
+  {id:'mac11',category:'Macular Disorders',name:'Anti-VEGF Response Index',inputs:[{label:'Baseline VA (logMAR)',tooltip:'Visual acuity in logMAR'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*20+v[1]*0.2},
+  {id:'mac12',category:'Macular Disorders',name:'Choroidal Neovascularization Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'AMD Stage (1-3)',tooltip:'Age-related macular degeneration stage'}],formula:v=>v[0]*0.2+v[1]*30},
+
+  // --- Vascular Retina (12)
+  {id:'vas1',category:'Vascular Retina',name:'Diabetic Retinopathy Risk',inputs:[{label:'Diabetes Duration (years)',tooltip:'Years since diabetes diagnosis'},{label:'HbA1c (%)',tooltip:'Glycated hemoglobin'}],formula:v=>v[0]*1.5+v[1]*10},
+  {id:'vas2',category:'Vascular Retina',name:'Hypertensive Retinopathy Index',inputs:[{label:'Systolic BP (mmHg)',tooltip:'Measured systolic blood pressure'},{label:'Diastolic BP (mmHg)',tooltip:'Measured diastolic blood pressure'}],formula:v=>v[0]*0.3+v[1]*0.2},
+  {id:'vas3',category:'Vascular Retina',name:'Retinal Vein Occlusion Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Hyperlipidemia (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.3+v[1]*25},
+  {id:'vas4',category:'Vascular Retina',name:'Retinal Artery Occlusion Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Atrial Fibrillation (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.3+v[1]*30},
+  {id:'vas5',category:'Vascular Retina',name:'Neovascularization Risk',inputs:[{label:'DR Stage (1-4)',tooltip:'Diabetic Retinopathy Stage'},{label:'Duration (years)',tooltip:'Years of diabetes'}],formula:v=>v[0]*10+v[1]*2},
+  {id:'vas6',category:'Vascular Retina',name:'Macular Ischemia Index',inputs:[{label:'OCTA FAZ Area (mm²)',tooltip:'Measured on OCT angiography'}],formula:v=>v[0]*1.5},
+  {id:'vas7',category:'Vascular Retina',name:'Vitreous Hemorrhage Risk',inputs:[{label:'PDR (0/1)',tooltip:'Proliferative Diabetic Retinopathy: 0 = No, 1 = Yes'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*30+v[1]*0.2},
+  {id:'vas8',category:'Vascular Retina',name:'Retinal Microaneurysm Count Index',inputs:[{label:'Number of Microaneurysms',tooltip:'Count from fundus photography'}],formula:v=>v[0]*1.2},
+  {id:'vas9',category:'Vascular Retina',name:'Capillary Nonperfusion Index',inputs:[{label:'OCTA Nonperfusion Area (%)',tooltip:'Measured percentage'}],formula:v=>v[0]*1.5},
+  {id:'vas10',category:'Vascular Retina',name:'Venous Beading Index',inputs:[{label:'Venous Beading Grade (0-3)',tooltip:'0 = None, 3 = Severe'}],formula:v=>v[0]*15},
+  {id:'vas11',category:'Vascular Retina',name:'IRMA Risk Score',inputs:[{label:'IRMA Grade (0-3)',tooltip:'Intraretinal microvascular abnormality grade'}],formula:v=>v[0]*20},
+  {id:'vas12',category:'Vascular Retina',name:'Fluorescein Leakage Index',inputs:[{label:'Leakage Area (%)',tooltip:'From FFA imaging'}],formula:v=>v[0]*1.2},
+
+  // --- OCT Metrics (12)
+  {id:'oct1',category:'OCT Metrics',name:'Central Foveal Thickness',inputs:[{label:'Foveal Thickness (µm)',tooltip:'Measured on OCT'}],formula:v=>v[0]},
+  {id:'oct2',category:'OCT Metrics',name:'RNFL Thickness Average',inputs:[{label:'Average RNFL (µm)',tooltip:'Retinal nerve fiber layer thickness'}],formula:v=>v[0]},
+  {id:'oct3',category:'OCT Metrics',name:'Ganglion Cell Complex Thickness',inputs:[{label:'GCC (µm)',tooltip:'Ganglion cell complex thickness'}],formula:v=>v[0]},
+  {id:'oct4',category:'OCT Metrics',name:'Macular Volume',inputs:[{label:'Macular Volume (mm³)',tooltip:'Measured from OCT'}],formula:v=>v[0]},
+  {id:'oct5',category:'OCT Metrics',name:'Drusen Volume',inputs:[{label:'Drusen Volume (mm³)',tooltip:'Measured from OCT'}],formula:v=>v[0]},
+  {id:'oct6',category:'OCT Metrics',name:'Subretinal Fluid Volume',inputs:[{label:'SRF Volume (mm³)',tooltip:'Measured from OCT'}],formula:v=>v[0]},
+  {id:'oct7',category:'OCT Metrics',name:'Choroidal Thickness',inputs:[{label:'Choroid Thickness (µm)',tooltip:'Measured from enhanced-depth OCT'}],formula:v=>v[0]},
+  {id:'oct8',category:'OCT Metrics',name:'Ellipsoid Zone Integrity Index',inputs:[{label:'EZ Disruption (%)',tooltip:'Measured percentage of disruption'}],formula:v=>100-v[0]},
+  {id:'oct9',category:'OCT Metrics',name:'Retinal Thickness Map Index',inputs:[{label:'Average Thickness (µm)',tooltip:'From OCT map'}],formula:v=>v[0]},
+  {id:'oct10',category:'OCT Metrics',name:'CMT Change Rate',inputs:[{label:'Baseline CMT (µm)',tooltip:'Central macular thickness'}, {label:'Follow-up CMT (µm)',tooltip:'Measured later'}],formula:v=>v[1]-v[0]},
+  {id:'oct11',category:'OCT Metrics',name:'Inner Retinal Layer Thickness',inputs:[{label:'IRL Thickness (µm)',tooltip:'Measured from OCT'}],formula:v=>v[0]},
+  {id:'oct12',category:'OCT Metrics',name:'Outer Retinal Layer Thickness',inputs:[{label:'ORL Thickness (µm)',tooltip:'Measured from OCT'}],formula:v=>v[0]},
+
+  // --- Surgery / Other Retina (12)
+  {id:'sur1',category:'Surgery / Other Retina',name:'Post-vitrectomy Complication Risk',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'RD (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.2+v[1]*25},
+  {id:'sur2',category:'Surgery / Other Retina',name:'Silicone Oil Emulsification Index',inputs:[{label:'Duration (months)',tooltip:'Duration silicone oil in eye'}],formula:v=>v[0]*2},
+  {id:'sur3',category:'Surgery / Other Retina',name:'Cataract Development Risk Post-Retina Surgery',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'Lens Status (0/1)',tooltip:'0 = Phakic, 1 = Pseudophakic'}],formula:v=>v[0]*0.3+v[1]*25},
+  {id:'sur4',category:'Surgery / Other Retina',name:'IOP Elevation Risk',inputs:[{label:'Pre-op IOP (mmHg)',tooltip:'Measured intraocular pressure'}],formula:v=>v[0]*1.2},
+  {id:'sur5',category:'Surgery / Other Retina',name:'Endophthalmitis Risk',inputs:[{label:'Surgery Type (1-3)',tooltip:'1=PPV,2=Scleral buckle,3=Other'}],formula:v=>v[0]*10},
+  {id:'sur6',category:'Surgery / Other Retina',name:'Macular Pucker Post-Surgery',inputs:[{label:'Age',tooltip:'Patient age in years'},{label:'ERM Present (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*0.2+v[1]*20},
+  {id:'sur7',category:'Surgery / Other Retina',name:'Retinal Re-detachment Risk',inputs:[{label:'Prior RD Surgery (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'PVR Grade (1-3)',tooltip:'Proliferative vitreoretinopathy grade'}],formula:v=>v[0]*30+v[1]*15},
+  {id:'sur8',category:'Surgery / Other Retina',name:'Vitrectomy Efficacy Score',inputs:[{label:'Baseline VA',tooltip:'Visual acuity before surgery'},{label:'Post-op VA',tooltip:'Visual acuity after surgery'}],formula:v=>v[1]-v[0]},
+  {id:'sur9',category:'Surgery / Other Retina',name:'Scleral Buckle Success Rate',inputs:[{label:'RD Extent (%)',tooltip:'Percentage of retina detached'}],formula:v=>100-v[0]*0.5},
+  {id:'sur10',category:'Surgery / Other Retina',name:'Tamponade Selection Index',inputs:[{label:'RD Type (0=Rhegmatogenous,1=Tractional,2=Exudative)',tooltip:'Select RD type'}],formula:v=>v[0]*10},
+  {id:'sur11',category:'Surgery / Other Retina',name:'Macular Reattachment Index',inputs:[{label:'RD Extent (%)',tooltip:'Percentage of retina detached'},{label:'Time to Surgery (days)',tooltip:'Days from diagnosis'}],formula:v=>v[0]*0.5+v[1]*0.2},
+  {id:'sur12',category:'Surgery / Other Retina',name:'Visual Recovery Prediction',inputs:[{label:'Pre-op VA',tooltip:'Visual acuity before surgery'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*0.3+v[1]*0.2},
+
+  // --- Pediatric Retina (10)
+  {id:'ped1',category:'Pediatric Retina',name:'ROP Risk Score',inputs:[{label:'Gestational Age (weeks)',tooltip:'Weeks at birth'},{label:'Birth Weight (g)',tooltip:'Weight at birth'}],formula:v=>(36-v[0])*2+(1500-v[1])*0.01},
+  {id:'ped2',category:'Pediatric Retina',name:'Retinoblastoma Risk Index',inputs:[{label:'Family History (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age (months)',tooltip:'Patient age in months'}],formula:v=>v[0]*50+v[1]*0.2},
+  {id:'ped3',category:'Pediatric Retina',name:'Pediatric RD Risk',inputs:[{label:'Prematurity (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'ROP Stage (1-5)',tooltip:'Retinopathy of prematurity stage'}],formula:v=>v[0]*20+v[1]*15},
+  {id:'ped4',category:'Pediatric Retina',name:'Coats Disease Severity',inputs:[{label:'Stage (1-5)',tooltip:'Clinical stage'}],formula:v=>v[0]*20},
+  {id:'ped5',category:'Pediatric Retina',name:'Fellow Eye Risk Index',inputs:[{label:'Eye Status (0=Normal,1=Affected)',tooltip:'Status of fellow eye'}],formula:v=>v[0]*30},
+  {id:'ped6',category:'Pediatric Retina',name:'Vitreous Hemorrhage Risk',inputs:[{label:'Trauma (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Age (months)',tooltip:'Patient age in months'}],formula:v=>v[0]*25+v[1]*0.1},
+  {id:'ped7',category:'Pediatric Retina',name:'Congenital Retinal Abnormality Index',inputs:[{label:'Type (1-5)',tooltip:'Type of abnormality'}],formula:v=>v[0]*20},
+  {id:'ped8',category:'Pediatric Retina',name:'ROP Plus Disease Risk',inputs:[{label:'Vascular Dilation Grade (0-3)',tooltip:'Severity of plus disease'}],formula:v=>v[0]*15},
+  {id:'ped9',category:'Pediatric Retina',name:'Macular Involvement Risk',inputs:[{label:'Extent (%)',tooltip:'Percentage of macula affected'}],formula:v=>v[0]*1.2},
+  {id:'ped10',category:'Pediatric Retina',name:'Retinal Detachment Progression Risk',inputs:[{label:'Stage (1-5)',tooltip:'Stage of retinal detachment'}],formula:v=>v[0]*15},
+
+  // --- Trauma & Special Cases (10)
+  {id:'tra1',category:'Trauma & Special Cases',name:'Ocular Trauma RD Risk',inputs:[{label:'Blunt Trauma (0/1)',tooltip:'0 = No, 1 = Yes'},{label:'Penetrating Trauma (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*20+v[1]*35},
+  {id:'tra2',category:'Trauma & Special Cases',name:'Vitreous Hemorrhage Trauma Risk',inputs:[{label:'Trauma Type (1=Blunt,2=Penetrating)',tooltip:'Type of trauma'},{label:'Age',tooltip:'Patient age in years'}],formula:v=>v[0]*25+v[1]*0.2},
+  {id:'tra3',category:'Trauma & Special Cases',name:'Post-traumatic Macular Edema',inputs:[{label:'Impact Severity (1-5)',tooltip:'1 = mild, 5 = severe'}],formula:v=>v[0]*20},
+  {id:'tra4',category:'Trauma & Special Cases',name:'Choroidal Rupture Risk',inputs:[{label:'Trauma Type (1=Blunt,2=Penetrating)',tooltip:'Type of trauma'}],formula:v=>v[0]*25},
+  {id:'tra5',category:'Trauma & Special Cases',name:'Retinal Tear Post-trauma',inputs:[{label:'Extent (%)',tooltip:'Percentage of retina affected'}],formula:v=>v[0]*1.5},
+  {id:'tra6',category:'Trauma & Special Cases',name:'Hyphema Risk',inputs:[{label:'Blunt Trauma (0/1)',tooltip:'0 = No, 1 = Yes'}],formula:v=>v[0]*30},
+  {id:'tra7',category:'Trauma & Special Cases',name:'Vitreoretinal Proliferation Risk',inputs:[{label:'Trauma Severity (1-5)',tooltip:'1 = mild, 5 = severe'}],formula:v=>v[0]*20},
+  {id:'tra8',category:'Trauma & Special Cases',name:'Post-traumatic Neovascularization',inputs:[{label:'Ischemia Area (%)',tooltip:'Measured retinal ischemia area'}],formula:v=>v[0]*1.5},
+  {id:'tra9',category:'Trauma & Special Cases',name:'Traumatic Macular Hole Risk',inputs:[{label:'Trauma Severity (1-5)',tooltip:'1 = mild, 5 = severe'}],formula:v=>v[0]*15},
+  {id:'tra10',category:'Trauma & Special Cases',name:'Retinal Detachment Progression',inputs:[{label:'Initial Detachment (%)',tooltip:'Percentage initially detached'}],formula:v=>v[0]*1.2},
+];
+
+// Generate calculators dynamically
+const container=document.getElementById('calculatorContainer');
+let currentCategory='';
+calculators.forEach(calc=>{
+  if(calc.category!==currentCategory){
+    currentCategory=calc.category;
+    container.innerHTML+=`<div class="category">${currentCategory}</div>`;
+  }
+  let html=`<div class="calculator" id="${calc.id}"><h3>${calc.name}</h3>`;
+  calc.inputs.forEach((input,i)=>{
+    let tooltipHTML = input.tooltip ? `<span class="tooltip">ℹ<span class="tooltiptext">${input.tooltip}</span></span>` : '';
+    if(i===calc.inputs.length-1){
+      html+=`<div class="calculator-row"><label>${input.label}${tooltipHTML}</label><input type="number" id="${calc.id}_input${i}"><button onclick="runCalc('${calc.id}')">Calculate</button></div>`;
+    } else {
+      html+=`<div class="calculator-row"><label>${input.label}${tooltipHTML}</label><input type="number" id="${calc.id}_input${i}"></div>`;
+    }
+  });
+  html+=`<div class="result" id="${calc.id}Result">Result: 0.00</div></div>`;
+  container.innerHTML+=html;
+});
+
+// Calculation function
+function runCalc(id){
+  const calc=calculators.find(c=>c.id===id);
+  const vals=calc.inputs.map((_,i)=>{
+    const el=document.getElementById(`${id}_input${i}`);
+    return parseFloat(el.value)||0;
+  });
+  const result=calc.formula(vals);
+  document.getElementById(`${id}Result`).innerText=`Result: ${result.toFixed(2)}`;
+}
+
+// Prediction Section
+container.innerHTML+=`
+<div class="calculator" id="predictionSection">
+  <h3>Patient Prediction Summary</h3>
+  <button onclick="generatePrediction()">Generate Prediction</button>
+  <div class="result" id="predictionResult">Prediction will appear here after calculating all inputs.</div>
+</div>
+`;
+
+// Weighted prediction function
+function generatePrediction(){
+  const weights = {
+    'Retinal Detachment':0.3,
+    'Macular Disorders':0.25,
+    'Vascular Retina':0.2,
+    'OCT Metrics':0.15,
+    'Surgery / Other Retina':0.05,
+    'Pediatric Retina':0.03,
+    'Trauma & Special Cases':0.02
+  };
+  const categorySums = {};
+  calculators.forEach(calc=>{
+    const val = parseFloat(document.getElementById(`${calc.id}Result`).innerText.replace('Result: ','')||0);
+    categorySums[calc.category] = (categorySums[calc.category]||0) + val;
+  });
+  let totalWeighted = 0;
+  for(let cat in categorySums){
+    totalWeighted += categorySums[cat]* (weights[cat]||0);
+  }
+
+  let prediction='';
+  if(totalWeighted<200) prediction='Low risk for retina complications';
+  else if(totalWeighted<500) prediction='Moderate risk for retina complications';
+  else prediction='High risk for retina complications – recommend specialist evaluation';
+
+  let categoryDetails='';
+  for(let cat in categorySums){
+    categoryDetails+=`${cat}: ${categorySums[cat].toFixed(2)}\n`;
+  }
+
+  document.getElementById('predictionResult').innerText=`${categoryDetails}\nOverall Prediction: ${prediction}`;
+}
+</script>
+</body>
+</html>
